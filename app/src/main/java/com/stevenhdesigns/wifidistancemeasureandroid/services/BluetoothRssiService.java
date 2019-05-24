@@ -27,14 +27,6 @@ import io.reactivex.disposables.Disposable;
 public class BluetoothRssiService {
     RxBleClient rxBleClient;
     String SERVICE_UUID_STRING = "D4627123-5555-9999-73B7-FEE516F96870";
-    //    var centralManager: CentralManager! = CentralManager(queue: .main)
-//    var peripheralManager: PeripheralManager! = PeripheralManager(queue: .main)
-//    var centralManagerObserver: Observable<ScannedPeripheral>!
-//    var bleService:CBMutableService!
-//    var disposablePeripheralScanner: Disposable!
-//    var disposablePeripheralManagerAdvertise: Disposable!
-//    var peripheralDatasetIndex = [UUID: Int]()
-//    var peripheralConnected = [UUID: Int]()
     public BluetoothRssiDelegate delegate;
     Disposable scanSubscription;
 

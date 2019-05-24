@@ -5,6 +5,7 @@ import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -14,6 +15,7 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.stevenhdesigns.wifidistancemeasureandroid.charts.UpdatableLineChart;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.BluetoothRssiDelegate;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.BluetoothRssiService;
+import com.stevenhdesigns.wifidistancemeasureandroid.services.MailService;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.UdpEncoderService;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.UdpEncoderServiceDelegate;
 
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
     private ArrayList dataList = new ArrayList<String>();
     private UdpEncoderService udpEncoderService = new UdpEncoderService();
     private BluetoothRssiService bluetoothRssiService = new BluetoothRssiService();
+    private MailService mailService = new MailService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
 
         setupCharts();
         setupTimer();
+
+        mailService.setup(this);
 
         bluetoothRssiService.delegate = this;
         bluetoothRssiService.setupBLE(this, getApplicationContext());
@@ -128,8 +133,8 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
         encoderPositionLineChart.addData(value.floatValue());
     }
 
-    void onSaveDataButtonPressed() {
-        // TODO: mail data
+    public void onSaveDataButtonPressed(View view) {
+        mailService.sendMail(this, dataList);
     }
 
     @Override
@@ -137,6 +142,10 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
         if (requestCode == 9) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 bluetoothRssiService.permissionGranted(getApplicationContext());
+            }
+        } else if (requestCode == 10) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i("MAIL_PERMISSION", "Permission Granted");
             }
         }
     }
