@@ -21,6 +21,7 @@ public class UpdatableLineChart extends LineChart {
     float lastTime = 0.0f;
     String label;
     private Activity activity;
+    float prevX = -999f;
 
     public UpdatableLineChart(Context context) {
         super(context);
@@ -87,12 +88,22 @@ public class UpdatableLineChart extends LineChart {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                getData().addEntry(new Entry(diff, v), dataSetIndex);
-                getXAxis().setAxisMinimum(diff - threshold);
-                removeOldDataFor(dataSetIndex);
-                getData().notifyDataChanged();
-                notifyDataSetChanged();
-                invalidate();
+                try {
+                    // @BUG: because this is run on the main thread, the order of execution seems to
+                    // go out of order at times which causes some issues.
+                    if (diff >= prevX) {
+                        prevX = diff;
+
+                        getData().addEntry(new Entry(diff, v), dataSetIndex);
+                        getXAxis().setAxisMinimum(diff - threshold);
+                        removeOldDataFor(dataSetIndex);
+                        getData().notifyDataChanged();
+                        notifyDataSetChanged();
+                        invalidate();
+                    }
+                } catch (Exception e) {
+                    // pass
+                }
             }
         });
     }

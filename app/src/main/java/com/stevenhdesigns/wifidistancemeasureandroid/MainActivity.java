@@ -1,5 +1,6 @@
 package com.stevenhdesigns.wifidistancemeasureandroid;
 
+import android.content.pm.PackageManager;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,6 +12,8 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.stevenhdesigns.wifidistancemeasureandroid.charts.UpdatableLineChart;
+import com.stevenhdesigns.wifidistancemeasureandroid.services.BluetoothRssiDelegate;
+import com.stevenhdesigns.wifidistancemeasureandroid.services.BluetoothRssiService;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.UdpEncoderService;
 import com.stevenhdesigns.wifidistancemeasureandroid.services.UdpEncoderServiceDelegate;
 
@@ -21,13 +24,14 @@ import java.util.TimerTask;
 
 import static android.graphics.Color.BLUE;
 
-public class MainActivity extends AppCompatActivity implements UdpEncoderServiceDelegate {
+public class MainActivity extends AppCompatActivity implements UdpEncoderServiceDelegate, BluetoothRssiDelegate {
     private UpdatableLineChart actualDistanceLineChart;
     private UpdatableLineChart rssiLineChart;
     private UpdatableLineChart encoderPositionLineChart;
     private Timer timer;
     private ArrayList dataList = new ArrayList<String>();
-    private UdpEncoderService udpEncoderService =  new UdpEncoderService();
+    private UdpEncoderService udpEncoderService = new UdpEncoderService();
+    private BluetoothRssiService bluetoothRssiService = new BluetoothRssiService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +45,15 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
         setupCharts();
         setupTimer();
 
+        bluetoothRssiService.delegate = this;
+        bluetoothRssiService.setupBLE(this, getApplicationContext());
+
         udpEncoderService.delegate = this;
         try {
             udpEncoderService.setupUDP();
         } catch (IOException e) {
-            e.printStackTrace();
             Log.d("UDP", "failed");
+            e.printStackTrace();
         }
     }
 
@@ -103,9 +110,10 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
         dataList.add(String.format("%d,%s,%f,%f,%f", System.currentTimeMillis(), deviceId, encoderPositionLineChart.getLastTime(), actualDistanceLineChart.getLastTime(), rssiLineChart.getLastTime()));
     }
 
-    void bluetoothRssi(float value) {
-        rssiLineChart.setLastTime(value);
-        rssiLineChart.addData(value);
+    @Override
+    public void bluetoothRssi(Double value) {
+        rssiLineChart.setLastTime(value.floatValue());
+        rssiLineChart.addData(value.floatValue());
     }
 
     @Override
@@ -122,5 +130,14 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
 
     void onSaveDataButtonPressed() {
         // TODO: mail data
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 9) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                bluetoothRssiService.permissionGranted(getApplicationContext());
+            }
+        }
     }
 }
