@@ -55,6 +55,8 @@ public class BluetoothRssiService {
         // @SEE: https://code.tutsplus.com/tutorials/how-to-advertise-android-as-a-bluetooth-le-peripheral--cms-25426
         BluetoothLeAdvertiser advertiser = BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
 
+        BluetoothAdapter.getDefaultAdapter().setName("BLELOC");
+
         AdvertiseSettings settings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
                 .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
@@ -66,7 +68,7 @@ public class BluetoothRssiService {
         AdvertiseData data = new AdvertiseData.Builder()
                 .setIncludeDeviceName(false)
                 .addServiceUuid(pUuid)
-                .addServiceData(pUuid, "Data".getBytes(Charset.forName("UTF-8")))
+                .setIncludeDeviceName(true)
                 .build();
 
         AdvertiseCallback advertisingCallback = new AdvertiseCallback() {
