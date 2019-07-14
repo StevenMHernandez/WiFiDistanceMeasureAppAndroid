@@ -78,7 +78,7 @@ public class UpdatableLineChart extends LineChart {
             public void run() {
                 timerAction();
             }
-        }, 0, 25);
+        }, 0, 10);
     }
 
     public void addData(final float v) {
