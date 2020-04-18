@@ -1,11 +1,14 @@
 package com.stevenhdesigns.wifidistancemeasureandroid;
 
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -34,6 +37,11 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
     private BluetoothRssiService bluetoothRssiService = new BluetoothRssiService();
     private FileDataCollectorService fileDataCollectorService = new FileDataCollectorService();
 
+    String currentState = "null";
+    int currentStateIndex = 0;
+    String[] states = new String[] {"approaching", "retreating"};
+    private Button changeActionButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
         actualDistanceLineChart = findViewById(R.id.actualDistanceLineChart);
         rssiLineChart = findViewById(R.id.rssiLineChart);
         encoderPositionLineChart = findViewById(R.id.encoderPositionLineChart);
+        changeActionButton = findViewById(R.id.changeActionButton);
 
         setupCharts();
         setupTimer();
@@ -58,6 +67,29 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
             Log.d("UDP", "failed");
             e.printStackTrace();
         }
+
+        changeActionButton.setText("Press once you are '" + states[currentStateIndex] + "'.");
+
+        changeActionButton.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    currentState = states[currentStateIndex];
+                    changeActionButton.setText("Release after complete");
+                    changeActionButton.setBackgroundColor(Color.BLUE);
+                    changeActionButton.setTextColor(Color.WHITE);
+                    break;
+                case MotionEvent.ACTION_UP:
+                    currentState = "null";
+                    currentStateIndex++;
+                    currentStateIndex = currentStateIndex % states.length;
+                    changeActionButton.setText("Press once you are '" + states[currentStateIndex] + "'.");
+                    changeActionButton.setBackgroundColor(Color.WHITE);
+                    changeActionButton.setTextColor(Color.BLUE);
+                    break;
+            }
+
+            return true;
+        });
     }
 
     void setupCharts() {
@@ -97,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
     }
 
     void setupTimer() {
-        fileDataCollectorService.handle("time,uuid,encoder,distance,rssi\n");
+        fileDataCollectorService.handle("time,uuid,encoder,distance,rssi,current_state\n");
 
         timer = new Timer();
 //        timer.schedule(new TimerTask() {
@@ -110,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements UdpEncoderService
 
     void timerAction() {
         String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        fileDataCollectorService.handle(String.format("%d,%s,%f,%f,%f\n", System.currentTimeMillis(), deviceId, encoderPositionLineChart.getLastTime(), actualDistanceLineChart.getLastTime(), rssiLineChart.getLastTime()));
+        fileDataCollectorService.handle(String.format("%d,%s,%f,%f,%f,%s\n", System.currentTimeMillis(), deviceId, encoderPositionLineChart.getLastTime(), actualDistanceLineChart.getLastTime(), rssiLineChart.getLastTime(), currentState));
     }
 
     @Override

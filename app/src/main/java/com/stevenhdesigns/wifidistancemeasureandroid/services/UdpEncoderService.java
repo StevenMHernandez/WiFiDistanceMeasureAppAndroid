@@ -43,9 +43,18 @@ public class UdpEncoderService {
                 365.0, // encoder -> 325cm
                 401.0, // encoder -> 350cm
                 437.0, // encoder -> 375cm
+                500.0, // encoder -> 400cm
         };
 
         double d = 0.0;
+
+        // In rare cases where the number of encoder clicks is greater than expected (slight variations)
+        // we simply return the greatest possible.
+        // Because we don't care about exact distances and instead only care about the changes in
+        // action, we do not have to worry about these rare cases.
+        if (value > distances[distances.length - 1]) {
+            return distances[distances.length - 1] / 100.0;
+        }
 
         for (int i = 0; i < distances.length; i++) {
             if (value >= distances[i] && value < distances[i+1]) {
